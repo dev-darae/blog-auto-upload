@@ -1,0 +1,9 @@
+
+selenium
+undetected-chromedriver
+sqlalchemy
+psycopg2-binary
+python-dotenv
+webdriver-manager
+requests
+pytz
