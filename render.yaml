@@ -1,0 +1,11 @@
+services:
+  - type: worker
+    name: blog-auto-poster
+    runtime: docker
+    region: singapore
+    plan: starter
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: PYTHONUNBUFFERED
+        value: "1"
