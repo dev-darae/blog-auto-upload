@@ -13,63 +13,60 @@ import tistory.poster
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def run_automation():
+def run_naver_automation():
     load_dotenv()
-    
-    # Provider IDs (CONSTANTS, assumed based on DB context)
     PROVIDER_NAVER = 19
-    PROVIDER_TISTORY = 8
-    
-    logging.info("--- Starting Automation Cycle ---")
-    
-    # 1. Naver Jobs
+    logging.info("--- Starting Naver Automation Cycle ---")
     try:
         naver_jobs = database.get_scheduled_jobs(PROVIDER_NAVER)
         logging.info(f"Found {len(naver_jobs)} Naver jobs.")
-        
         for job in naver_jobs:
             logging.info(f"Processing Naver Job: {job['publish_id']} ({job['title']})")
             success = naver.poster.post_naver(job)
-            
-            status_id = 3 if success else 2 # 3=Published, 2=Fail
+            status_id = 3 if success else 2
             fail_reason = None if success else "Automation Script Failed"
-            
             database.update_job_status(job['publish_id'], status_id, fail_reason)
-            time.sleep(10) # Cooling between jobs
-            
+            time.sleep(5)
     except Exception as e:
         logging.error(f"Naver Loop Error: {e}")
+    logging.info("--- Naver Cycle Completed ---")
 
-    # 2. Tistory Jobs
+def run_tistory_automation():
+    load_dotenv()
+    PROVIDER_TISTORY = 8
+    logging.info("--- Starting Tistory Automation Cycle ---")
     try:
         tistory_jobs = database.get_scheduled_jobs(PROVIDER_TISTORY)
         logging.info(f"Found {len(tistory_jobs)} Tistory jobs.")
-        
         for job in tistory_jobs:
             logging.info(f"Processing Tistory Job: {job['publish_id']} ({job['title']})")
             success = tistory.poster.post_tistory(job)
-            
             status_id = 3 if success else 2
             fail_reason = None if success else "Automation Script Failed"
-            
             database.update_job_status(job['publish_id'], status_id, fail_reason)
-            time.sleep(10)
-            
+            time.sleep(5)
     except Exception as e:
         logging.error(f"Tistory Loop Error: {e}")
-
-    logging.info("--- Cycle Completed ---")
+    logging.info("--- Tistory Cycle Completed ---")
 
 if __name__ == "__main__":
-    # Background Worker Loop
-    # User requested: "Run 4 times an hour" -> every 15 minutes.
-    INTERVAL_MINUTES = 15
+    KST = pytz.timezone('Asia/Seoul')
+    logging.info("Worker Started. Scheduled Mode: Naver(00,30m), Tistory(15,45m)")
     
-    logging.info(f"Worker Started. Running every {INTERVAL_MINUTES} minutes.")
+    last_run_minute = -1
     
     while True:
-        run_automation()
+        now = datetime.now(KST)
+        current_minute = now.minute
         
-        # Wait for next cycle
-        logging.info(f"Sleeping for {INTERVAL_MINUTES} minutes...")
-        time.sleep(60 * INTERVAL_MINUTES)
+        # Avoid running multiple times in the same minute
+        if current_minute != last_run_minute:
+            if current_minute in [0, 30]:
+                run_naver_automation()
+                last_run_minute = current_minute
+            elif current_minute in [15, 45]:
+                run_tistory_automation()
+                last_run_minute = current_minute
+                
+        # Check every 30 seconds to be precise but not too frequent
+        time.sleep(30)
