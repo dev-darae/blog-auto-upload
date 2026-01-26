@@ -5,7 +5,7 @@ import random
 import undetected_chromedriver as uc
 from selenium.webdriver.chrome.options import Options
 
-def get_driver(headline=False):
+def get_driver(headless=True):
     """
     Initializes and returns an undetected_chromedriver instance.
     """
@@ -25,13 +25,11 @@ def get_driver(headline=False):
     options.add_argument("--disable-infobars")
     options.add_argument("--disable-popup-blocking")
     
-    # Headless Mode (Optional via argument, or forced by environment)
-    # Note: undetected-chromedriver has a special way to handle headless to avoid detection.
-    # But for simple blog posting, standard headless might fail bot checks. 
-    # Valid pattern for UC headless:
-    if headline or is_server:
+    # Headless Mode
+    if headless or is_server:
         options.add_argument("--headless=new") 
-    
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1920,1080")    
     # Language and User Agent (Generic)
     options.add_argument("--lang=ko_KR")
     options.add_argument("--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
