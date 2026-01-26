@@ -1,5 +1,5 @@
 
-# Use an official Python runtime with Chrome support
+# Use an official Python runtime with Chrome support (v2)
 # Since Selenium needs Chrome, we can use a base image or install it manually.
 # 'python:3.9-slim' is lightweight, but we need to add Chrome.
 
