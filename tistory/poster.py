@@ -158,6 +158,16 @@ def post_tistory(job_data):
             
         time.sleep(5)
         
+        # 2.5 Handle "Draft Saved" alert if it exists
+        try:
+            alert = driver.switch_to.alert
+            print(f"Draft Alert detected: {alert.text}")
+            alert.dismiss() # Or alert.accept()? User said "취소를 누르고" -> dismiss()
+            print("Dismissed draft saved alert.")
+            time.sleep(1)
+        except:
+            pass
+        
         # 3. Switch to HTML Mode
         try:
             mode_btn = WebDriverWait(driver, 10).until(
