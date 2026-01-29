@@ -42,16 +42,12 @@ def login_kakao(driver, user_id, user_pw):
             id_input = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.ID, "loginId--1"))
             )
-            id_input.click()
-            time.sleep(0.5)
-            id_input.send_keys(user_id)
+            driver.execute_script("arguments[0].value = arguments[1];", id_input, user_id)
             time.sleep(0.5)
             
             # 2. Password
             pw_input = driver.find_element(By.ID, "password--2")
-            pw_input.click()
-            time.sleep(0.5)
-            pw_input.send_keys(user_pw)
+            driver.execute_script("arguments[0].value = arguments[1];", pw_input, user_pw)
             time.sleep(0.5)
             
             # Submit: <button type="submit" class="btn_g highlight submit">로그인</button>
