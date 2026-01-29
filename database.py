@@ -70,8 +70,8 @@ def get_scheduled_jobs(platform_provider_id):
                 pa.id as account_id,
                 COALESCE(pa.blog_id, ppa.blog_id) as blog_id,
                 COALESCE(pa.blog_pw, ppa.blog_pw) as blog_pw,
-                pa.blog_url,
-                pa.category_no,
+                COALESCE(pa.blog_url, ppa.blog_url) as blog_url,
+                COALESCE(pa.category_no, ppa.category_no) as category_no,
                 
                 ctp.content as content_html,
                 
@@ -79,6 +79,7 @@ def get_scheduled_jobs(platform_provider_id):
                 
             FROM publish_contents pc
             JOIN platform_accounts pa ON pc.platform_account_id = pa.id
+            LEFT JOIN platform_accounts ppa ON pa.parent_id = ppa.id
             JOIN content_text_by_provider ctp ON pc.content_text_by_provider_id = ctp.id
             JOIN content_texts ct ON ctp.content_text_id = ct.id
             
