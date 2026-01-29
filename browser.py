@@ -38,7 +38,9 @@ def get_driver(headless=True):
     options.add_argument("--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
     try:
-        driver = uc.Chrome(options=options, use_subprocess=True)
+        # Render's current google-chrome-stable is 144, but UC is trying to use 145 driver.
+        # We force version_main=144 for compatibility on the server.
+        driver = uc.Chrome(options=options, use_subprocess=True, version_main=144)
         driver.set_window_size(1920, 1080)
         return driver
     except Exception as e:

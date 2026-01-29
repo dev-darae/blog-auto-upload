@@ -317,10 +317,14 @@ def post_tistory(job_data):
 
     except Exception as e:
         print(f"Tistory Post Error: {e}")
-        driver.save_screenshot("debug_tistory_error.png")
+        if driver:
+            driver.save_screenshot("debug_tistory_error.png")
         return False
     finally:
         if driver:
-            driver.quit()
+            try:
+                driver.quit()
+            except:
+                pass
     
     return False
