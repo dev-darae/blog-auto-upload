@@ -18,6 +18,9 @@ def get_driver(headless=True):
     # For Render Basic Tier (Docker), we usually need headless.
     
     is_server = os.getenv("RENDER", False) or os.getenv("CI", False)
+    env_headless = os.getenv("HEADLESS", None)
+    if env_headless is not None:
+        headless = env_headless.lower() == "true"
     
     # Basic Options
     options.add_argument("--no-sandbox")
