@@ -161,16 +161,24 @@ def post_naver(job_data):
         except:
             pass
 
-        # 2. Handle Help/Guide Popups
+        # 2. Handle Help/Guide Popups & Native Alerts
         try:
             time.sleep(1)
+            # Dismiss native alerts if any
+            try:
+                alert = driver.switch_to.alert
+                print(f"Native Alert detected: {alert.text}")
+                alert.dismiss()
+            except:
+                pass
+                
             ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-            # Try closing specific help buttons (User suggestion)
+            # Try closing specific help buttons
             close_btns = driver.find_elements(By.CSS_SELECTOR, ".se-help-panel-close-button, .se-help-panel-close, .se-popup-button-cancel")
             for btn in close_btns:
                 if btn.is_displayed():
                     btn.click()
-                    print("Closed help panel.")
+                    print("Closed help/popup panel.")
                     time.sleep(1)
         except:
             pass
@@ -180,10 +188,10 @@ def post_naver(job_data):
         try: 
             # Smart Editor One Title Selectors
             title_input = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, ".se-documentTitle, .se-ff-tit, .se-title-text, .se-text-paragraph-align-center"))
+                EC.element_to_be_clickable((By.CSS_SELECTOR, ".se-documentTitle, .se-ff-tit, .se-title-text, .se-text-paragraph-align-center"))
             )
             title_input.click()
-            time.sleep(1)
+            time.sleep(1.5) # Increased delay for stability
             ActionChains(driver).send_keys(title).perform()
         except Exception as e: 
             print(f"Title input issue: {e}")
@@ -194,49 +202,47 @@ def post_naver(job_data):
             # Smart Editor One Content Body
             content_area = driver.find_element(By.CSS_SELECTOR, ".se-main-container .se-text-paragraph, .se-component-content, .se-content")
             content_area.click()
-            time.sleep(1)
+            time.sleep(1.5)
             ActionChains(driver).send_keys(content).perform()
         except Exception as e:
             print(f"Content input issue: {e}")
             
-        # 7. Publish (User Provided Logic - Refined Selectors)
+        # 7. Publish (Robust Retry Logic)
         try:
             print("Key step: Publishing...")
             
             # Step 1: Click 'Publish' Button (Top Right)
-            # Target: <button ... class="publish_btn__m9KHH" data-click-area="tpb.publish">
             found_publish = False
-            try:
-                # Robust selectors using partial matches and data attributes
-                candidates = [
-                    "button[data-click-area='tpb.publish']",   # Best: text based data attribute
-                    "button[class*='publish_btn']",            # Partial class match
-                    ".btn_publish",                            # Legacy
-                    "button.publish_btn"                       # Legacy
-                ]
-                for selector in candidates:
-                    publish_btns = driver.find_elements(By.CSS_SELECTOR, selector)
-                    for btn in publish_btns:
-                        if btn.is_displayed():
-                            btn.click()
-                            found_publish = True
-                            print(f"Clicked primary Publish button ({selector}).")
-                            break
-                    if found_publish:
-                        break
-            except:
-                pass
-                
-            if not found_publish:
+            for attempt in range(3): # Try 3 times
                 try:
-                    xpath = "//button[contains(., '발행')]"
-                    btns = driver.find_elements(By.XPATH, xpath)
-                    for btn in btns:
-                        if btn.is_displayed():
-                            btn.click()
-                            found_publish = True
-                            print("Clicked primary Publish button (XPath).")
-                            break
+                    candidates = [
+                        "button[data-click-area='tpb.publish']",
+                        "button[class*='publish_btn']",
+                        ".btn_publish"
+                    ]
+                    for selector in candidates:
+                        publish_btns = driver.find_elements(By.CSS_SELECTOR, selector)
+                        for btn in publish_btns:
+                            if btn.is_displayed():
+                                # JS Click is more reliable in some headless scenarios
+                                driver.execute_script("arguments[0].click();", btn)
+                                found_publish = True
+                                print(f"Clicked primary Publish button ({selector}) on attempt {attempt+1}.")
+                                break
+                        if found_publish: break
+                except:
+                    pass
+                
+                if found_publish: break
+                time.sleep(2)
+
+            if not found_publish:
+                # Last resort XPath
+                try:
+                    btn = driver.find_element(By.XPATH, "//button[contains(., '발행')]")
+                    driver.execute_script("arguments[0].click();", btn)
+                    found_publish = True
+                    print("Clicked primary Publish button (XPath).")
                 except:
                     pass
 
