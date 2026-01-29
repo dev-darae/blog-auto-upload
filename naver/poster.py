@@ -307,6 +307,12 @@ def post_naver(job_data):
                 driver.save_screenshot("debug_publish_layer.png")
                 return False
 
+        except Exception as e:
+            print(f"Publish logic failed: {e}")
+            if driver:
+                driver.save_screenshot("debug_publish_exception.png")
+            return False
+
     except Exception as e:
         print(f"Naver Error: {e}")
         if driver:
