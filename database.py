@@ -68,8 +68,8 @@ def get_scheduled_jobs(platform_provider_id):
                 pc.content_video_id,
                 
                 pa.id as account_id,
-                pa.blog_id,
-                pa.blog_pw,
+                COALESCE(pa.blog_id, ppa.blog_id) as blog_id,
+                COALESCE(pa.blog_pw, ppa.blog_pw) as blog_pw,
                 pa.blog_url,
                 pa.category_no,
                 
