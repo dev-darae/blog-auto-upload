@@ -160,25 +160,36 @@ def update_job_status(publish_id, status_id, fail_reason=None):
         group_id = row.group_id if row else None
         
         # 2. Check if Group Status needs update
-        if group_id and status_id == 3: # Only check on success for now, or always?
-            # Check if there are any non-success items in this group
-            # Assuming we want to mark group as COMPLETE (3) only if ALL items are 3.
+        if group_id:
+            # Check status counts in this group
             check_query = text("""
-                SELECT COUNT(*) 
+                SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN publish_status_id = 3 THEN 1 ELSE 0 END) as published,
+                    SUM(CASE WHEN publish_status_id = 2 THEN 1 ELSE 0 END) as failed
                 FROM publish_contents 
-                WHERE group_id = :group_id 
-                  AND publish_status_id != 3
+                WHERE group_id = :group_id
             """)
-            pending_count = s.execute(check_query, {'group_id': group_id}).scalar()
+            stats = s.execute(check_query, {'group_id': group_id}).fetchone()
             
-            if pending_count == 0:
-                print(f"All items in Group {group_id} are published. Updating Group Status.")
+            new_group_status = None
+            
+            if stats.failed > 0:
+                if stats.failed == stats.total:
+                    new_group_status = 5 # total_failed (전체 실패)
+                else:
+                    new_group_status = 4 # partial_failed (부분 실패)
+            elif stats.published == stats.total:
+                new_group_status = 3 # published (발행완료)
+            
+            if new_group_status:
+                print(f"Group {group_id} status updated to {new_group_status}")
                 group_update = text("""
                     UPDATE publish_contents_groups
-                    SET publish_status_id = 3
+                    SET publish_status_id = :new_status
                     WHERE id = :group_id
                 """)
-                s.execute(group_update, {'group_id': group_id})
+                s.execute(group_update, {'group_id': group_id, 'new_status': new_group_status})
                 
         s.commit()
     except Exception as e:
