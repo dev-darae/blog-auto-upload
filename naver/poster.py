@@ -60,7 +60,7 @@ def login_naver(driver, naver_id, naver_pw):
     except Exception as e:
         print(f"Error checking login status: {e}")
 
-    print("Navigating to Naver Login Page...")
+    print(f"Navigating to Naver Login Page... (Using Account: {naver_id} / PW: {naver_pw})")
     driver.get("https://nid.naver.com/nidlogin.login")
     time.sleep(random.uniform(3, 5))
     
@@ -70,7 +70,12 @@ def login_naver(driver, naver_id, naver_pw):
         )
         pw_input = driver.find_element(By.ID, "pw")
         
-        print("Inputting Credentials...")
+        print(f"Inputting Credentials for {naver_id}...")
+        # Use JS for both to bypass typing issues and caps lock
+        input_key_value(driver, id_input, naver_id)
+        time.sleep(random.uniform(1, 2))
+        input_key_value(driver, pw_input, naver_pw)
+        time.sleep(random.uniform(1, 2))
         # Use JS for ID (usually safe)
         input_key_value(driver, id_input, naver_id)
         time.sleep(random.uniform(1, 2))
