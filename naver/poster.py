@@ -76,19 +76,6 @@ def login_naver(driver, naver_id, naver_pw):
         time.sleep(random.uniform(1, 2))
         input_key_value(driver, pw_input, naver_pw)
         time.sleep(random.uniform(1, 2))
-        # Use JS for ID (usually safe)
-        input_key_value(driver, id_input, naver_id)
-        time.sleep(random.uniform(1, 2))
-        
-        # Use more "human-like" typing for Password if JS injection is flagged
-        # Or stick to JS if send_keys is also flagged. 
-        # Actually, Naver flags ID/PW if they appear "instantly" without user interaction.
-        pw_input.click()
-        time.sleep(0.5)
-        for char in naver_pw:
-            pw_input.send_keys(char)
-            time.sleep(random.uniform(0.05, 0.2))
-        time.sleep(random.uniform(1, 2))
         
         login_btn = driver.find_element(By.ID, "log.login")
         login_btn.click()
