@@ -61,7 +61,7 @@ if __name__ == "__main__":
         
         # Avoid running multiple times in the same minute
         if current_minute != last_run_minute:
-            if current_minute in [0, 10, 30]: # Added 10 for testing
+            if current_minute in [0, 10, 30, 40]: # Added 40 for testing
                 run_naver_automation()
                 last_run_minute = current_minute
             elif current_minute in [15, 45]:

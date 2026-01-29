@@ -5,7 +5,7 @@ import random
 import undetected_chromedriver as uc
 from selenium.webdriver.chrome.options import Options
 
-def get_driver(headless=True):
+def get_driver(headless=False):
     """
     Initializes and returns an undetected_chromedriver instance.
     """
