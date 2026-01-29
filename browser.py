@@ -28,8 +28,6 @@ def get_driver(headless=True):
     options.add_argument("--disable-infobars")
     options.add_argument("--disable-popup-blocking")
     options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option("useAutomationExtension", False)
     
     # Headless Mode
     if headless or is_server:
@@ -45,9 +43,8 @@ def get_driver(headless=True):
     options.add_argument("--lang=ko_KR")
 
     try:
-        # Render's current google-chrome-stable is 144, but UC is trying to use 145 driver.
-        # We force version_main=144 for compatibility on the server.
-        driver = uc.Chrome(options=options, use_subprocess=True, version_main=144)
+        # Simplest possible UC start for local debug
+        driver = uc.Chrome(version_main=144)
         driver.set_window_size(1920, 1080)
         return driver
     except Exception as e:

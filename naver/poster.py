@@ -75,14 +75,8 @@ def login_naver(driver, naver_id, naver_pw):
         input_key_value(driver, id_input, naver_id)
         time.sleep(random.uniform(1, 2))
         
-        # Use more "human-like" typing for Password if JS injection is flagged
-        # Or stick to JS if send_keys is also flagged. 
-        # Actually, Naver flags ID/PW if they appear "instantly" without user interaction.
-        pw_input.click()
-        time.sleep(0.5)
-        for char in naver_pw:
-            pw_input.send_keys(char)
-            time.sleep(random.uniform(0.05, 0.2))
+        # Use JS for Password to avoid Caps Lock or keyboard layout issues
+        input_key_value(driver, pw_input, naver_pw)
         time.sleep(random.uniform(1, 2))
         
         login_btn = driver.find_element(By.ID, "log.login")
@@ -156,10 +150,16 @@ def post_naver(job_data):
 
         blog_url = job_data.get('blog_url')
         if blog_url:
-            target_url = f"{blog_url.rstrip('/')}?Redirect=Write"
+            target_url = blog_url.rstrip('/')
+            if "?" in target_url:
+                target_url += "&Redirect=Write"
+            else:
+                target_url += "?Redirect=Write"
         else:
             target_url = f"https://blog.naver.com/{blog_id}?Redirect=Write"
-        if category_no:
+            
+        # Ensure category_no is treated correctly (can be int or str)
+        if category_no is not None and str(category_no).strip() != "" and str(category_no) != "0":
             target_url += f"&categoryNo={category_no}"
             
         print(f"Navigating to Write Page: {target_url}")
