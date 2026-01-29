@@ -30,13 +30,27 @@ def input_key_value(driver, element, value):
 
 def login_naver(driver, naver_id, naver_pw):
     """
-    Performs automated login to Naver.
+    Performs automated login to Naver with stealth and cookie support.
     """
     print("Checking login status at naver.com...")
     try:
         driver.get("https://www.naver.com")
-        time.sleep(random.uniform(1.5, 2.5))
+        time.sleep(random.uniform(2, 4))
         
+        # 1. Try Cookie Login if NAVER_COOKIES env var exists
+        # Format: [{"name": "...", "value": "...", "domain": ".naver.com", ...}, ...]
+        env_cookies = os.getenv("NAVER_COOKIES")
+        if env_cookies:
+            try:
+                print("Found NAVER_COOKIES in env. Attempting injection...")
+                cookies = json.loads(env_cookies)
+                for cookie in cookies:
+                    driver.add_cookie(cookie)
+                driver.get("https://www.naver.com")
+                time.sleep(2)
+            except Exception as ce:
+                print(f"Cookie injection failed: {ce}")
+
         # Check login state
         logout_btn = driver.find_elements(By.CSS_SELECTOR, "button.btn_logout, a.btn_logout")
         if logout_btn and any(b.is_displayed() for b in logout_btn):
@@ -48,7 +62,7 @@ def login_naver(driver, naver_id, naver_pw):
 
     print("Navigating to Naver Login Page...")
     driver.get("https://nid.naver.com/nidlogin.login")
-    time.sleep(random.uniform(2, 3))
+    time.sleep(random.uniform(3, 5))
     
     try:
         id_input = WebDriverWait(driver, 10).until(
@@ -57,24 +71,37 @@ def login_naver(driver, naver_id, naver_pw):
         pw_input = driver.find_element(By.ID, "pw")
         
         print("Inputting Credentials...")
+        # Use JS for ID (usually safe)
         input_key_value(driver, id_input, naver_id)
-        time.sleep(1)
-        input_key_value(driver, pw_input, naver_pw)
-        time.sleep(1)
+        time.sleep(random.uniform(1, 2))
+        
+        # Use more "human-like" typing for Password if JS injection is flagged
+        # Or stick to JS if send_keys is also flagged. 
+        # Actually, Naver flags ID/PW if they appear "instantly" without user interaction.
+        pw_input.click()
+        time.sleep(0.5)
+        for char in naver_pw:
+            pw_input.send_keys(char)
+            time.sleep(random.uniform(0.05, 0.2))
+        time.sleep(random.uniform(1, 2))
         
         login_btn = driver.find_element(By.ID, "log.login")
         login_btn.click()
-        time.sleep(3)
+        time.sleep(random.uniform(4, 6))
         
-        if "captcha" in driver.page_source or "자동입력 방지" in driver.page_source:
+        if "captcha" in driver.page_source or "자동입력 방지" in driver.page_source or "g-recaptcha" in driver.page_source:
              print("CRITICAL: Captcha detected.")
+             driver.save_screenshot("debug_naver_captcha.png")
              return False
              
         # Verification
         driver.get("https://www.naver.com")
-        time.sleep(2)
+        time.sleep(3)
         if "logout" in driver.page_source or "로그아웃" in driver.page_source:
+            print("Naver Login Successful.")
             return True
+            
+        print("Naver Login Failed: Could not verify login state.")
         return False
         
     except Exception as e:

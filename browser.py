@@ -27,15 +27,22 @@ def get_driver(headless=True):
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-infobars")
     options.add_argument("--disable-popup-blocking")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
     
     # Headless Mode
     if headless or is_server:
         options.add_argument("--headless=new") 
         options.add_argument("--disable-gpu")
-        options.add_argument("--window-size=1920,1080")    
-    # Language and User Agent (Generic)
+        options.add_argument("--window-size=1920,1080")
+        # Headless specific flags to avoid detection
+        options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+    else:
+        options.add_argument("--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+
+    # Language
     options.add_argument("--lang=ko_KR")
-    options.add_argument("--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
     try:
         # Render's current google-chrome-stable is 144, but UC is trying to use 145 driver.
