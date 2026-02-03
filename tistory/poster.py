@@ -16,10 +16,22 @@ except ImportError:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from browser import get_driver
 
+def input_key_value(driver, element, value):
+    """
+    Inputs value into an element using JS and dispatches change events to avoid deletion on blur.
+    """
+    driver.execute_script("arguments[0].value = arguments[1];", element, value)
+    time.sleep(0.5)
+    driver.execute_script("""
+        arguments[0].dispatchEvent(new Event('input', { bubbles: true }));
+        arguments[0].dispatchEvent(new Event('change', { bubbles: true }));
+    """, element)
+
 def login_kakao(driver, user_id, user_pw):
     """
     Logins to Tistory via Kakao Account using 'Click then Type' logic.
     """
+    print(f"DEBUG: Tistory login_kakao called with ID: {user_id}, PW: {user_pw[:3] if user_pw else 'None'}***")
     print("Navigating to Tistory Login...")
     driver.get("https://www.tistory.com/auth/login")
     time.sleep(2)
@@ -35,35 +47,53 @@ def login_kakao(driver, user_id, user_pw):
     
     # Check if on Kakao login page
     if "accounts.kakao.com" in driver.current_url:
-        print("On Kakao Login Page. Inputting credentials...")
+        print(f"On Kakao Login Page. Inputting credentials for {user_id}...")
         try:
             # Login Input
             # 1. ID
             id_input = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.ID, "loginId--1"))
             )
-            driver.execute_script("arguments[0].value = arguments[1];", id_input, user_id)
+            ActionChains(driver).move_to_element(id_input).click().perform()
             time.sleep(0.5)
             
-            # 2. Password
-            pw_input = driver.find_element(By.ID, "password--2")
-            driver.execute_script("arguments[0].value = arguments[1];", pw_input, user_pw)
+            # Clear existing using human keyboard shortcuts
+            id_input.send_keys(Keys.COMMAND, 'a')
+            id_input.send_keys(Keys.BACKSPACE)
+            time.sleep(0.3)
+            
+            # Type ID
+            for char in user_id:
+                id_input.send_keys(char)
+                time.sleep(random.uniform(0.01, 0.03))
             time.sleep(0.5)
             
-            # Submit: <button type="submit" class="btn_g highlight submit">로그인</button>
+            # 2. Password - Explicitly find and focus
+            pw_input = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.ID, "password--2"))
+            )
+            ActionChains(driver).move_to_element(pw_input).click().perform()
+            time.sleep(0.5)
+            
+            for char in user_pw:
+                pw_input.send_keys(char)
+                time.sleep(random.uniform(0.01, 0.03))
+            time.sleep(0.5)
+            
+            # Submit
             submit_btn = driver.find_element(By.CSS_SELECTOR, "button.btn_g.highlight.submit")
             submit_btn.click()
-            time.sleep(5)
+            time.sleep(10)
             
             # Check success
-            if "tistory.com" in driver.current_url:
+            curr_url = driver.current_url or ""
+            if "tistory.com" in curr_url or "blog.tistory.com" in curr_url:
                 print("Login successful.")
                 return True
-            elif "protect" in driver.current_url:
+            elif "protect" in curr_url:
                 print("CRITICAL: Kakao Account Protection triggered.")
                 return False
             else:
-                 # Fallback check
                  return True 
                  
         except Exception as e:
@@ -210,11 +240,13 @@ def post_tistory(job_data):
                 target_cat = driver.find_element(By.CSS_SELECTOR, f"div[category-id='{category_id}']")
                 
                 # Ensure visible?
-                if not target_cat.is_displayed():
+                if target_cat and not target_cat.is_displayed():
                      print("Category item hidden, trying script click.")
                      driver.execute_script("arguments[0].click();", target_cat)
-                else:
+                elif target_cat:
                     target_cat.click()
+                else:
+                    print(f"Error: Category {category_id} not found.")
                     
                 print(f"Selected category {category_id}")
             except Exception as e:
