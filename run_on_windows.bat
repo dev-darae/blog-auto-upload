@@ -50,6 +50,15 @@ if "!CHROME_FOUND!"=="0" (
 
 :: 2. Setup Virtual Environment
 echo [INFO] Checking virtual environment...
+if exist "venv" (
+    :: Check if venv is valid
+    venv\Scripts\python --version >nul 2>&1
+    if !ERRORLEVEL! NEQ 0 (
+        echo [WARNING] Virtual environment appears corrupted. Recreating...
+        rmdir /s /q venv
+    )
+)
+
 if not exist "venv" (
     echo [INFO] Creating virtual environment 'venv'...
     python -m venv venv
